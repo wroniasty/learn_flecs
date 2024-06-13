@@ -1,6 +1,6 @@
 #include <iostream>
 #include <flecs.h>
-//#include <spdlog/spdlog.h>
+#include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
 
 struct Node {};
@@ -29,7 +29,7 @@ int main() {
 
 	while (frames-- > 0) {
 		ecs.progress();
-		//spdlog::info("Frame {0}", frames);
+		spdlog::info("Frame {0}", frames);
 	}
 
 	return 1;
