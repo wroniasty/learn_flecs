@@ -32,13 +32,14 @@ add_git_dependency(
 ) 
 
 project("flecs_sandbox")
+ 
 
+FILE(GLOB AllModulesSources modules/*.cpp)
+FILE(GLOB AllModulesHeaders modules/*.h)
 
-FILE(GLOB AllSources *.cpp)
-#FILE(GLOB AllHeaders *.h)
 LIST(REMOVE_ITEM AllSources main.cpp)
 
-add_executable(sandbox main.cpp ${AllSources})
+add_executable(sandbox main.cpp ${AllModulesSources} "modules/scenegraph.cpp")
 target_link_libraries(sandbox flecs::flecs_static glm::glm spdlog)
 
 set_property(TARGET sandbox PROPERTY CXX_STANDARD 20)
