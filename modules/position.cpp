@@ -1,9 +1,12 @@
 #include "position.h"
 
+using namespace comp;
 
-void comp::Position::Register(flecs::world& ecs) {
-	ecs.component<Position>()
-		.member<Position::value_type>("x")
-		.member<Position::value_type>("y")
-		.member<Position::value_type>("z");
+
+mod::Position::Position(flecs::world& ecs)
+{
+	ecs.component<comp::Position>("Position")
+		.member<comp::Position::value_type>("x")
+		.member<comp::Position::value_type>("y")
+		.member<comp::Position::value_type>("z");
 }

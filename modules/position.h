@@ -4,11 +4,17 @@
 #include <glm/glm.hpp>
 
 namespace comp {
-	struct Position : public glm::dvec3 {
-		static void Register(flecs::world& ecs);
-	};
+	typedef glm::dvec3 Position;
 
 	struct World {};
 	struct Local {};
 
 }
+
+namespace mod {
+	struct Position {
+		Position(flecs::world& ecs);
+	};
+}
+
+

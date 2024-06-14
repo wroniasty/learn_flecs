@@ -20,7 +20,7 @@ add_git_dependency(
 ) 
 
 add_git_dependency(
-    glm 
+    glm  
     https://github.com/g-truc/glm
     bf71a834948186f4097caa076cd2663c69a10e1e #1.0.1
 )
@@ -29,8 +29,24 @@ add_git_dependency(
     spdlog
     https://github.com/gabime/spdlog
     v1.14.1
-) 
- 
+)  
+
+add_git_dependency(
+    catch2
+    https://github.com/catchorg/Catch2
+    v3.6.0
+)
+
+set(BOOST_ROOT "d:/Documents/Games/boost_1_85_0")
+find_package(Boost)
+
+if(Boost_FOUND)
+	include_directories(${Boost_INCLUDE_DIRS})
+    message(STATUS "Boost :${Boost_LIBRARY_DIRS}")
+else()
+	message(FATAL_ERROR "Boost not found")
+endif()
+
 project("flecs_sandbox")
  
 
@@ -40,7 +56,8 @@ FILE(GLOB AllModulesHeaders modules/*.h)
 LIST(REMOVE_ITEM AllSources main.cpp)
 
 add_executable(sandbox main.cpp ${AllModulesSources})
-target_link_libraries(sandbox flecs::flecs_static glm::glm spdlog)
+target_link_libraries(sandbox flecs::flecs_static glm::glm spdlog Catch2)
+target_compile_definitions(sandbox PUBLIC -D_TEST_SUITE) 
 
 add_executable(min1 m1_main.cpp ${AllModulesSources})
 target_link_libraries(min1 flecs::flecs_static glm::glm spdlog)

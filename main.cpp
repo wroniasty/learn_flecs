@@ -3,6 +3,8 @@
 #include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
 #include <Windows.h>
+#include <catch2/catch_session.hpp>
+
 #include <format>
 #include "modules/position.h"
 #include "modules/scenegraph.h"
@@ -28,87 +30,30 @@ struct CurrentFrame {
 	int value;
 };
 
-void setup_scene_root_remove_add_test(flecs::world& ecs) {
-	auto root = create_tree(5, 5, ecs);
-	std::vector<flecs::entity> children;
-	root.children([&children](flecs::entity e) {
-		children.push_back(e);
-	});
 
-	ecs.system("RemoveAddTest")
-		.kind(flecs::PreUpdate)
-		.no_readonly()
-		.iter([=](flecs::iter& it) {
-			auto cf = it.world().get<CurrentFrame>();
-			if (cf->value % 10 == 0) {
-				spdlog::info("[{}] SwitchRoot", cf->value);
-				auto root_idx = (cf->value / 10) % children.size();
-				if (root_idx == 1) root_idx = 0;
+int main(int argc, char **argv) {
 
-				it.world().remove_all<SceneRoot>();
-				auto new_root = children[root_idx];
-				new_root.set<SceneRoot>({ new_root });
-			}
-		});
+	Catch::Session session; // There must be exactly one instance
 
-	ecs.observer<SceneRoot>("SceneRootNode")
-		.event(flecs::OnSet)
-		.iter([](flecs::iter& it) {
-			auto cf = it.world().get<CurrentFrame>();
-			for (auto i : it) {
-				auto sr = it.entity(i).get<SceneRoot>();
-				spdlog::info("[{}] Set SceneRoot: {} {}", cf->value, it.entity(i).name().c_str(), sr->scene_origin);
-			}
-	});
+	int height = 0; // Some user variable you want to be able to set
 
-	ecs.observer<SceneRoot>("RemoveRootNode")
-		.event(flecs::OnRemove)
-		.iter([](flecs::iter& it) {
-			auto cf = it.world().get<CurrentFrame>();
-			for (auto i : it) {
-				spdlog::info("[{}] Remove SceneRoot: {}", cf->value, it.entity(i).name().c_str());
-			}
-	});
+	// Build a new parser on top of Catch2's
+	using namespace Catch::Clara;
 
-	ecs.system<Node, SceneRoot, SceneRoot>("SceneRootTest")
-		.kind(flecs::PostUpdate)
-		.iter([](flecs::iter& it) {
-			auto cf = it.world().get<CurrentFrame>();
-			spdlog::info("[{}] SceneRootTest", cf->value);
+	auto cli
+		= session.cli();     // Get Catch2's command line parser
 
-			for (auto i : it) {
-				
-			}
-		});
+	// Now pass the new composite back to Catch2 so it uses that
+	session.cli(cli);
+	//session.configData().showDurations = Catch::ShowDurations::Always;
+	session.configData().verbosity = Catch::Verbosity::High;
 
-}
+	// Let Catch2 (using Clara) parse the command line
+	int returnCode = session.applyCommandLine(argc, argv);
+	if (returnCode != 0) // Indicates a command line error
+		return returnCode;
 
-int main() {
-	flecs::world ecs;
-	
-	Position::Register(ecs);
+	// if set on the command line then 'height' is now set at this point
 
-	ecs.set<flecs::Rest>({});
-	ecs.import<flecs::monitor>();
-
-	ecs.set<CurrentFrame>({ 0 });
-	ecs.system<CurrentFrame>("FrameCounter")
-		.term_at(1).singleton()
-		.kind(flecs::PreFrame)
-		.iter([](flecs::iter &it, CurrentFrame *frame) {
-			frame->value++;
-		});	
-
-	setup_scene_root_remove_add_test(ecs);
-	ecs.set_target_fps(5);
-
-	while (true) {
-		//ecs.set<int, flecs::>({ frame });
-		ecs.progress();		
-		if (GetKeyState(VK_ESCAPE) & 0x80) {
-			break;
-		}
-	}
-
-	return 0;
+	return session.run();
 }
