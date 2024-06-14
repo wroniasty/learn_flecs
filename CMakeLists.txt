@@ -10,7 +10,7 @@ function(add_git_dependency libName gitURL gitTag)
         GIT_PROGRESS   TRUE
     )
     FetchContent_MakeAvailable(${libName})
-   # target_compile_options(${libName} PRIVATE "-w")
+   # target_compile_optio s(${libName} PRIVATE "-w")
 endfunction()
 
 add_git_dependency(
@@ -30,7 +30,7 @@ add_git_dependency(
     https://github.com/gabime/spdlog
     v1.14.1
 ) 
-
+ 
 project("flecs_sandbox")
  
 
@@ -39,8 +39,11 @@ FILE(GLOB AllModulesHeaders modules/*.h)
 
 LIST(REMOVE_ITEM AllSources main.cpp)
 
-add_executable(sandbox main.cpp ${AllModulesSources} "modules/scenegraph.cpp")
+add_executable(sandbox main.cpp ${AllModulesSources})
 target_link_libraries(sandbox flecs::flecs_static glm::glm spdlog)
+
+add_executable(min1 m1_main.cpp ${AllModulesSources})
+target_link_libraries(min1 flecs::flecs_static glm::glm spdlog)
 
 set_property(TARGET sandbox PROPERTY CXX_STANDARD 20)
 
