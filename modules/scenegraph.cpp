@@ -23,7 +23,7 @@ flecs::system sys::Register_UpdateTreeWorldPosition(flecs::world& ecs) {
 		.term_at(2).second<World>().inout()
 		.term_at(3).second<World>()
 		.term_at(3).parent().cascade().optional()
-		.kind(flecs::PostUpdate)		
+		.kind(flecs::PostUpdate)				
 		.iter(_system_update_tree_world_position);
 }
 
@@ -31,8 +31,28 @@ mod::SceneGraph::SceneGraph(flecs::world& ecs) {
 	spdlog::info("Importing mod::SceneGraph");
 	ecs.import<mod::Position>();
 	auto system = sys::Register_UpdateTreeWorldPosition(ecs);
-	spdlog::info("UpdateTreeWorldSystem: {}", system.query().str().c_str());
+	spdlog::debug("UpdateTreeWorldSystem: query={}", system.query().str().c_str());
 	
+}
+
+void mod::SceneGraph::setSceneRoot(flecs::world &ecs, flecs::entity_t e, flecs::entity_t origin) const
+{	
+	ecs.filter_builder<SceneRoot>()
+		.term<SceneRoot>()
+		.each([e](flecs::entity e, SceneRoot& scene) {
+			e.remove<SceneRoot>();
+		});
+	if (origin == 0) {
+		origin = e;
+	}
+	ecs.entity(e).set<SceneRoot>({ origin });
+}
+
+void mod::SceneGraph::setSceneRootDefer(flecs::world& ecs, flecs::entity_t e, flecs::entity_t origin) const
+{
+	ecs.defer_begin();
+	setSceneRoot(ecs, e, origin);
+	ecs.defer_end();
 }
 
 #ifdef _TEST_SUITE
@@ -63,8 +83,6 @@ TEST_CASE("Scene Graph Module") {
 			}
 		}
 	}
-
-
 
 	ecs.progress();
 
@@ -115,6 +133,28 @@ TEST_CASE("Scene Graph Module") {
 			}
 		});
 
+	}
+
+	SECTION("SceneRoot set") {
+		auto root = ecs.entity().is_a(_prefab);
+		auto sg = ecs.get<mod::SceneGraph>();
+		
+		std::vector<flecs::entity> top_level_nodes;
+		ecs.each([&top_level_nodes](flecs::entity e, const Node& node) {
+			if (e.depth(flecs::ChildOf) == 0) {
+				top_level_nodes.push_back(e);
+			}
+		});
+
+		for (auto e : top_level_nodes) {
+			sg->setSceneRootDefer(ecs, e);
+			ecs.progress();
+			ecs.each([e](flecs::entity e, const SceneRoot& scene) {
+				spdlog::debug("SceneRoot: {}  origin: {}", e.path().c_str(), scene.scene_origin);
+				REQUIRE(scene.scene_origin == e);
+			});
+		}
+				
 	}
 
 };

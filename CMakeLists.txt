@@ -24,7 +24,7 @@ add_git_dependency(
     https://github.com/g-truc/glm
     bf71a834948186f4097caa076cd2663c69a10e1e #1.0.1
 )
-
+ 
 add_git_dependency(
     spdlog
     https://github.com/gabime/spdlog
