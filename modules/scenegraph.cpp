@@ -5,6 +5,9 @@
 
 using namespace comp;
 
+/*
+	Update the world position of nodes in the scene graph
+*/
 void _system_update_tree_world_position(flecs::iter& it, const Position *local, Position *world, Position *parent) {	
 	for (auto i : it) {
 		auto e = it.entity(i);
@@ -27,12 +30,42 @@ flecs::system sys::Register_UpdateTreeWorldPosition(flecs::world& ecs) {
 		.iter(_system_update_tree_world_position);
 }
 
+/*
+	Offset the scene position of nodes in the scene graph
+*/
+void _system_offset_scene_position(flecs::iter& it, const Position *world, Position *scene, SceneRoot *sr, SceneRoot *sr_own) {
+	const Position *offset;
+	if (sr) {
+		offset = it.world().entity(sr->scene_origin).get<Position, World>();
+	}
+	else {
+		offset = it.world().entity(sr_own->scene_origin).get<Position, World>();
+	}
+
+	for (auto i : it) {
+		scene[i] = world[i] - (*offset);
+	}
+}
+
+flecs::system sys::Register_OffsetScenePosition(flecs::world& ecs) {
+		return ecs.system<const Position, Position, SceneRoot, SceneRoot>("OffsetScenePosition")
+		.with<Node>()
+		.without(flecs::Disabled).up(flecs::ChildOf)   // Only update entities that do not have a disabled ancestor
+		.term_at(1).second<World>()
+		.term_at(2).second<Scene>()
+		.term_at(3).parent().cascade().oper(flecs::Or)
+		.term_at(4)
+		.kind(flecs::PreStore)
+		.iter(_system_offset_scene_position);
+}
+
 mod::SceneGraph::SceneGraph(flecs::world& ecs) {
 	spdlog::info("Importing mod::SceneGraph");
 	ecs.import<mod::Position>();
-	auto system = sys::Register_UpdateTreeWorldPosition(ecs);
-	spdlog::debug("UpdateTreeWorldSystem: query={}", system.query().str().c_str());
-	
+	update_tree_world_position = sys::Register_UpdateTreeWorldPosition(ecs);
+	offset_scene_position = sys::Register_OffsetScenePosition(ecs);
+	spdlog::info("UpdateTreeWorldSystem: query={}", update_tree_world_position.query().str().c_str());	
+	spdlog::info("OffsetScenePosition: query={}", offset_scene_position.query().str().c_str());
 }
 
 void mod::SceneGraph::setSceneRoot(flecs::world &ecs, flecs::entity_t e, flecs::entity_t origin) const
@@ -48,6 +81,23 @@ void mod::SceneGraph::setSceneRoot(flecs::world &ecs, flecs::entity_t e, flecs::
 	ecs.entity(e).set<SceneRoot>({ origin });
 }
 
+void mod::SceneGraph::setSceneOrigin(flecs::world& ecs, flecs::entity_t origin) const
+{
+	ecs.filter_builder<SceneRoot>()
+		.term<SceneRoot>()
+		.each([origin](flecs::entity e, SceneRoot& scene) {
+			scene.scene_origin = origin;
+			e.set<SceneRoot>(scene);
+	});
+}
+
+void mod::SceneGraph::setSceneOriginDefer(flecs::world& ecs, flecs::entity_t origin) const
+{
+	ecs.defer_begin();
+	setSceneOrigin(ecs, origin);
+	ecs.defer_end();
+}
+
 void mod::SceneGraph::setSceneRootDefer(flecs::world& ecs, flecs::entity_t e, flecs::entity_t origin) const
 {
 	ecs.defer_begin();
@@ -55,9 +105,20 @@ void mod::SceneGraph::setSceneRootDefer(flecs::world& ecs, flecs::entity_t e, fl
 	ecs.defer_end();
 }
 
+
 #ifdef _TEST_SUITE
 
 #include <catch2/catch_test_macros.hpp>
+#include <functional>
+
+void _iter_tree(flecs::entity e, int depth, std::function<bool(flecs::entity, int)> f) {
+	if (!f(e, depth)) {
+		return;
+	}
+	e.children([&](flecs::entity child) {
+		_iter_tree(child, depth + 1, f);
+	});
+}
 
 TEST_CASE("Scene Graph Module") {
 	flecs::world ecs;
@@ -66,7 +127,20 @@ TEST_CASE("Scene Graph Module") {
 	auto _prefab = ecs.prefab("Node")
 		.override<Position, Local>()
 		.override<Position, World>()
+		.override<Position, Scene>()
 		.add<Node>();
+
+	ecs.observer<SceneRoot>("SceneRootObserver_Set")
+		.event(flecs::OnSet)
+		.each([](flecs::entity e, SceneRoot& scene) {
+			spdlog::info("SceneRoot is set on: {} with origin: {}", e.path().c_str(), scene.scene_origin);
+		});
+
+	ecs.observer<SceneRoot>("SceneRootObserver_Remove")
+		.event(flecs::OnSet)
+		.each([](flecs::entity e, SceneRoot& scene) {
+			spdlog::info("SceneRoot is removed from: {}", e.path().c_str());
+		});
 
 	Position default_pos = { 1.0, 1.0, 0.0 };
 	for (int i = 0; i < 2; i++) {
@@ -146,14 +220,40 @@ TEST_CASE("Scene Graph Module") {
 			}
 		});
 
-		for (auto e : top_level_nodes) {
-			sg->setSceneRootDefer(ecs, e);
+		for (auto root : top_level_nodes) {
+			sg->setSceneRootDefer(ecs, root);
 			ecs.progress();
-			ecs.each([e](flecs::entity e, const SceneRoot& scene) {
+			ecs.each([](flecs::entity e, const SceneRoot& scene) {
 				spdlog::debug("SceneRoot: {}  origin: {}", e.path().c_str(), scene.scene_origin);
 				REQUIRE(scene.scene_origin == e);
 			});
+			std::vector<flecs::entity> children;
+			root.children([&children](flecs::entity child) {
+				children.push_back(child);
+			});
+			for (auto c : children) {
+				sg->setSceneOriginDefer(ecs, c);
+				ecs.progress();
+				_iter_tree(root, 0, [&ecs, &root](flecs::entity e, int depth) {
+					auto scene = e.get<Position, Scene>();
+					auto world = e.get<Position, World>();
+					auto local = e.get<Position, Local>();
+					auto sr = root.get<SceneRoot>();
+					auto sre = ecs.entity(sr->scene_origin);
+					auto origin = sre.get<Position, World>();
+					spdlog::info("(SR) Entity: {} scene: {},{}  world: {},{}  origin: {},{} ({})", e.path().c_str(),
+						scene->x, scene->y,
+						world->x, world->y,
+						origin->x, origin->y, sre.path().c_str()
+					);
+					REQUIRE(scene->x == world->x - origin->x);
+					REQUIRE(scene->y == world->y - origin->y);
+					return true;
+				});
+			}
 		}
+
+
 				
 	}
 

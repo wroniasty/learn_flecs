@@ -9,27 +9,6 @@
 #include "modules/position.h"
 #include "modules/scenegraph.h"
 
-using namespace comp;
-
-flecs::entity create_tree(int siblings, int depth, flecs::world& ecs) {
-	static int id = 0;
-	flecs::entity e = ecs.entity(std::format("node{:04}", id++).c_str())
-		.add<Position, Local>()
-		.add<Position, World>()
-		.add<Node>();
-	if (depth > 0) {
-		for (int i = 0; i < siblings; i++) {
-			auto sibling = create_tree(siblings, depth - 1, ecs);
-			sibling.child_of(e);
-		}
-	}
-	return e;
-}
-
-struct CurrentFrame {
-	int value;
-};
-
 
 int main(int argc, char **argv) {
 

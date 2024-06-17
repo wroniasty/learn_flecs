@@ -55,12 +55,16 @@ FILE(GLOB AllModulesHeaders modules/*.h)
 
 LIST(REMOVE_ITEM AllSources main.cpp)
 
-add_executable(sandbox main.cpp ${AllModulesSources})
-target_link_libraries(sandbox flecs::flecs_static glm::glm spdlog Catch2)
-target_compile_definitions(sandbox PUBLIC -D_TEST_SUITE) 
+add_executable(runtests "main_test_runner.cpp" ${AllModulesSources})
+target_link_libraries(runtests flecs::flecs_static glm::glm spdlog Catch2)
+target_compile_definitions(runtests PUBLIC -D_TEST_SUITE) 
+set_property(TARGET runtests PROPERTY CXX_STANDARD 20)
 
-add_executable(min1 m1_main.cpp ${AllModulesSources})
-target_link_libraries(min1 flecs::flecs_static glm::glm spdlog)
 
-set_property(TARGET sandbox PROPERTY CXX_STANDARD 20)
+add_executable(scripted "main_scripted.cpp" ${AllModulesSources})
+target_link_libraries(scripted flecs::flecs_static glm::glm spdlog)
+target_compile_definitions(scripted PUBLIC -D_NO_TESTS) 
+set_property(TARGET scripted PROPERTY CXX_STANDARD 20)
+
+
 
