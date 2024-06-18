@@ -8,12 +8,18 @@
 
 #include "modules/position.h"
 #include "modules/scenegraph.h"
+#include "modules/input.h"
 
 #include "Windows.h"
 
 namespace fs = std::filesystem;
 
 int main(int argc, char** argv) {
+	if (!glfwInit())
+	{
+		return 1;
+	}
+
 	flecs::world ecs;
 	
 	spdlog::info("Working directory: {}", fs::current_path().string());
@@ -24,6 +30,7 @@ int main(int argc, char** argv) {
 	
 	ecs.import<mod::Position>();
 	ecs.import<mod::SceneGraph>();
+	ecs.import<mod::Input>(); 
 
 	std::string main_file = (fs::current_path() / "plecs" / "main.flecs").string();
 

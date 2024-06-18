@@ -138,15 +138,15 @@ TEST_CASE("Scene Graph Module") {
 
 	ecs.import<mod::SceneGraph>();		
 	auto _prefab = ecs.prefab("Node")
-		.override<Position, Local>()
-		.override<Position, World>()
-		.override<Position, Scene>()
+		.override<Vec3d, Local>()
+		.override<Vec3d, World>()
+		.override<Vec3d, Scene>()
 		.add<Node>();
 
 	ecs.observer<SceneRoot>("SceneRootObserver_Set")
 		.event(flecs::OnSet)
 		.each([](flecs::entity e, SceneRoot& scene) {
-			spdlog::info("SceneRoot is set on: {} with origin: {}", e.path().c_str(), scene.scene_origin);
+			spdlog::info("SceneRoot is set on: {} with origin: {}", e.path().c_str(), scene.scene_origin.id());
 		});
 
 	ecs.observer<SceneRoot>("SceneRootObserver_Remove")
@@ -155,16 +155,16 @@ TEST_CASE("Scene Graph Module") {
 			spdlog::info("SceneRoot is removed from: {}", e.path().c_str());
 		});
 
-	Position default_pos = { 1.0, 1.0, 0.0 };
+	Vec3d default_pos = { 1.0, 1.0, 0.0 };
 	for (int i = 0; i < 2; i++) {
 		auto ei = ecs.entity().is_a(_prefab);
 		for (int j = 0; j < 2; j++) {
 			auto ej = ecs.entity().is_a(_prefab);
-			ej.set<Position, Local>(default_pos);
+			ej.set<Vec3d, Local>(default_pos);
 			ej.child_of(ei);
 			for (int k = 0; k < 2; k++) {
 				auto ek = ecs.entity().is_a(_prefab);
-				ek.set<Position, Local>(default_pos);
+				ek.set<Vec3d, Local>(default_pos);
 				ek.set<float>(1.0f);
 				ek.child_of(ej);
 			}
@@ -173,10 +173,10 @@ TEST_CASE("Scene Graph Module") {
 
 	ecs.progress();
 
-	SECTION("Propagate World Position") {
+	SECTION("Propagate World Vec3d") {
 		ecs.each([](flecs::entity e, const Node& node) {
-			auto wpos = e.get<Position, World>();
-			auto lpos = e.get<Position, Local>();
+			auto wpos = e.get<Vec3d, World>();
+			auto lpos = e.get<Vec3d, Local>();
 			REQUIRE(((int)wpos->x == e.depth(flecs::ChildOf)));
 			REQUIRE(((int)wpos->y == e.depth(flecs::ChildOf)));
 			});
@@ -186,7 +186,7 @@ TEST_CASE("Scene Graph Module") {
 		ecs.defer_begin();
 		ecs.each([](flecs::entity e, const Node& node) {
 			if (e.depth(flecs::ChildOf) == 0) {
-				e.set<Position, Local>({ 10.0, 10.0, 0.0 });
+				e.set<Vec3d, Local>({ 10.0, 10.0, 0.0 });
 			} else if (e.depth(flecs::ChildOf) == 1) {
 				e.disable();
 			}
@@ -197,8 +197,8 @@ TEST_CASE("Scene Graph Module") {
 		ecs.each([](flecs::entity e, const Node& node) {
 			auto depth = e.depth(flecs::ChildOf);
 			if (depth > 1) {
-				REQUIRE(e.get<Position, World>()->x == depth);
-				REQUIRE(e.get<Position, World>()->y == depth);
+				REQUIRE(e.get<Vec3d, World>()->x == depth);
+				REQUIRE(e.get<Vec3d, World>()->y == depth);
 			}
 		});
 		ecs.defer_begin();
@@ -213,7 +213,7 @@ TEST_CASE("Scene Graph Module") {
 		ecs.progress();
 		ecs.each([](flecs::entity e, const Node& node) {
 			auto depth = e.depth(flecs::ChildOf);			
-			auto lpos = e.get<Position, World>();
+			auto lpos = e.get<Vec3d, World>();
 			if (depth > 0) {
 				REQUIRE(lpos->x == depth + 10.);
 				REQUIRE(lpos->y == depth + 10.);
@@ -237,7 +237,7 @@ TEST_CASE("Scene Graph Module") {
 			sg->setSceneRootDefer(ecs, root);
 			ecs.progress();
 			ecs.each([](flecs::entity e, const SceneRoot& scene) {
-				spdlog::debug("SceneRoot: {}  origin: {}", e.path().c_str(), scene.scene_origin);
+				spdlog::debug("SceneRoot: {}  origin: {}", e.path().c_str(), scene.scene_origin.id());
 				REQUIRE(scene.scene_origin == e);
 			});
 			std::vector<flecs::entity> children;
@@ -248,12 +248,12 @@ TEST_CASE("Scene Graph Module") {
 				sg->setSceneOriginDefer(ecs, c);
 				ecs.progress();
 				_iter_tree(root, 0, [&ecs, &root](flecs::entity e, int depth) {
-					auto scene = e.get<Position, Scene>();
-					auto world = e.get<Position, World>();
-					auto local = e.get<Position, Local>();
+					auto scene = e.get<Vec3d, Scene>();
+					auto world = e.get<Vec3d, World>();
+					auto local = e.get<Vec3d, Local>();
 					auto sr = root.get<SceneRoot>();
 					auto sre = ecs.entity(sr->scene_origin);
-					auto origin = sre.get<Position, World>();
+					auto origin = sre.get<Vec3d, World>();
 					spdlog::info("(SR) Entity: {} scene: {},{}  world: {},{}  origin: {},{} ({})", e.path().c_str(),
 						scene->x, scene->y,
 						world->x, world->y,

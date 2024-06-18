@@ -3,10 +3,10 @@ using c
 
 Prefab SceneNode {
 	- Node
-	- (Vec3d, Local)
-	- (Vec3d, World)
-	- (Vec3d, Scene)
-	- (Vec3f, Rotation)
+	- OVERRIDE | (Vec3d, Local)
+	- OVERRIDE | (Vec3d, World)
+	- OVERRIDE | (Vec3d, Scene)
+	- OVERRIDE | (Vec3f, Rotation)
 }
 
 Engine {
@@ -16,10 +16,8 @@ Engine {
 	Camera 
 	
 	World {
-		Galaxy : SceneNode {
-			
-			- SceneRoot
-
+		Galaxy : SceneNode {		
+			- SceneRoot { Planet2 }
 			Star1 : SceneNode {
 				- (Vec3d, Local) {1000, 1000, 0}
 
@@ -28,8 +26,12 @@ Engine {
 				}
 			}
 			Star2 : SceneNode {
-				Planet2 : SceneNode {
-					Moon2 : SceneNode
+				- (Vec3d, Local) {2000, 2000, 0}
+				Planet2 : SceneNode {					
+				    - (Vec3d, Local) {100, 100, 0}
+					Moon2 : SceneNode {
+						- (Vec3d, Local) {10, 10, 0}
+					}
 				}
 			}
 		}
