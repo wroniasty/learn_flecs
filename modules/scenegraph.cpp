@@ -62,6 +62,10 @@ flecs::system sys::Register_OffsetScenePosition(flecs::world& ecs) {
 mod::SceneGraph::SceneGraph(flecs::world& ecs) {
 	spdlog::info("Importing mod::SceneGraph");
 	ecs.import<mod::Position>();
+	ecs.component<Node>("Node");	
+	ecs.component<Scene>("Scene");
+	ecs.component<SceneRoot>("SceneRoot");
+
 	update_tree_world_position = sys::Register_UpdateTreeWorldPosition(ecs);
 	offset_scene_position = sys::Register_OffsetScenePosition(ecs);
 	spdlog::info("UpdateTreeWorldSystem: query={}", update_tree_world_position.query().str().c_str());	

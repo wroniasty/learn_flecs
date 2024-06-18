@@ -9,4 +9,8 @@ mod::Position::Position(flecs::world& ecs)
 		.member<comp::Position::value_type>("x")
 		.member<comp::Position::value_type>("y")
 		.member<comp::Position::value_type>("z");
+
+	ecs.component<comp::Local>("Local");
+	ecs.component<comp::World>("World");
+
 }
