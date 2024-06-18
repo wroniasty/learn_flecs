@@ -5,7 +5,7 @@ namespace comp {
 	struct Node {};
 	struct Scene {};
 	struct SceneRoot {
-		flecs::entity_t scene_origin = 0;
+		flecs::entity scene_origin;
 	};
 }
 

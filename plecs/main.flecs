@@ -1,0 +1,38 @@
+using flecs.meta
+using c
+
+Prefab SceneNode {
+	- Node
+	- (Vec3d, Local)
+	- (Vec3d, World)
+	- (Vec3d, Scene)
+	- (Vec3f, Rotation)
+}
+
+Engine {
+
+	Player
+	Window
+	Camera 
+	
+	World {
+		Galaxy : SceneNode {
+			
+			- SceneRoot
+
+			Star1 : SceneNode {
+				- (Vec3d, Local) {1000, 1000, 0}
+
+				Planet1 : SceneNode {
+					Moon1 : SceneNode
+				}
+			}
+			Star2 : SceneNode {
+				Planet2 : SceneNode {
+					Moon2 : SceneNode
+				}
+			}
+		}
+	}
+
+}

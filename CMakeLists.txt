@@ -13,6 +13,14 @@ function(add_git_dependency libName gitURL gitTag)
    # target_compile_optio s(${libName} PRIVATE "-w")
 endfunction()
 
+function(copy_resources_to_target target directory)
+	add_custom_command(TARGET ${target} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "$<TARGET_PROPERTY:${target},SOURCE_DIR>/${directory}"
+            "$<TARGET_PROPERTY:${target},BINARY_DIR>/${directory}"
+	)
+endfunction()
+
 add_git_dependency(
     flecs
     https://github.com/SanderMertens/flecs.git
@@ -57,14 +65,15 @@ LIST(REMOVE_ITEM AllSources main.cpp)
 
 add_executable(runtests "main_test_runner.cpp" ${AllModulesSources})
 target_link_libraries(runtests flecs::flecs_static glm::glm spdlog Catch2)
-target_compile_definitions(runtests PUBLIC -D_TEST_SUITE) 
+target_compile_definitions(runtests PUBLIC -D_TEST_SUITE -DGLM_FORCE_SWIZZLE) 
 set_property(TARGET runtests PROPERTY CXX_STANDARD 20)
 
 
 add_executable(scripted "main_scripted.cpp" ${AllModulesSources})
 target_link_libraries(scripted flecs::flecs_static glm::glm spdlog)
-target_compile_definitions(scripted PUBLIC -D_NO_TESTS) 
+target_compile_definitions(scripted PUBLIC -DGLM_FORCE_SWIZZLE) 
 set_property(TARGET scripted PROPERTY CXX_STANDARD 20)
+copy_resources_to_target(scripted plecs)
 
 
 

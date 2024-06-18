@@ -8,7 +8,7 @@ using namespace comp;
 /*
 	Update the world position of nodes in the scene graph
 */
-void _system_update_tree_world_position(flecs::iter& it, const Position *local, Position *world, Position *parent) {	
+void _system_update_tree_world_position(flecs::iter& it, const Vec3d *local, Vec3d *world, Vec3d *parent) {	
 	for (auto i : it) {
 		auto e = it.entity(i);
 		world[i] = local[i];
@@ -16,10 +16,10 @@ void _system_update_tree_world_position(flecs::iter& it, const Position *local, 
 			world[i] += parent[i];
 		}
 	}
-}
+} 
 
 flecs::system sys::Register_UpdateTreeWorldPosition(flecs::world& ecs) {
-	return ecs.system<const Position, Position, Position>("UpdateSceneTreeWorldPosition")
+	return ecs.system<const Vec3d, Vec3d, Vec3d>("::sys::SceneGraph::UpdateSceneTreeWorldPosition")
 		.with<Node>()
 		.without(flecs::Disabled).up(flecs::ChildOf)   // Only update entities that do not have a disabled ancestor
 		.term_at(1).second<Local>()
@@ -33,22 +33,27 @@ flecs::system sys::Register_UpdateTreeWorldPosition(flecs::world& ecs) {
 /*
 	Offset the scene position of nodes in the scene graph
 */
-void _system_offset_scene_position(flecs::iter& it, const Position *world, Position *scene, SceneRoot *sr, SceneRoot *sr_own) {
-	const Position *offset;
+void _system_offset_scene_position(flecs::iter& it, const Vec3d *world, Vec3d *scene, SceneRoot *sr, SceneRoot *sr_own) {
+	const Vec3d *offset;
+	flecs::entity origin_entity;
 	if (sr) {
-		offset = it.world().entity(sr->scene_origin).get<Position, World>();
+		origin_entity = sr->scene_origin;
 	}
 	else {
-		offset = it.world().entity(sr_own->scene_origin).get<Position, World>();
+		origin_entity = sr_own->scene_origin;
 	}
-
-	for (auto i : it) {
-		scene[i] = world[i] - (*offset);
+	if (origin_entity.is_valid()) {
+		offset = origin_entity.get<Vec3d, World>();
+		if (offset) {
+			for (auto i : it) {
+				scene[i] = world[i] - (*offset);
+			}
+		}
 	}
 }
 
 flecs::system sys::Register_OffsetScenePosition(flecs::world& ecs) {
-		return ecs.system<const Position, Position, SceneRoot, SceneRoot>("OffsetScenePosition")
+		return ecs.system<const Vec3d, Vec3d, SceneRoot, SceneRoot>("::sys::SceneGraph::OffsetScenePosition")
 		.with<Node>()
 		.without(flecs::Disabled).up(flecs::ChildOf)   // Only update entities that do not have a disabled ancestor
 		.term_at(1).second<World>()
@@ -61,10 +66,14 @@ flecs::system sys::Register_OffsetScenePosition(flecs::world& ecs) {
 
 mod::SceneGraph::SceneGraph(flecs::world& ecs) {
 	spdlog::info("Importing mod::SceneGraph");
+	
 	ecs.import<mod::Position>();
-	ecs.component<Node>("Node");	
-	ecs.component<Scene>("Scene");
-	ecs.component<SceneRoot>("SceneRoot");
+	ecs.component<Node>("::c::Node");	
+	ecs.component<Scene>("::c::Scene");
+	
+	ecs.component<SceneRoot>("::c::SceneRoot")
+		.member<flecs::entity_t>("scene_origin")
+		;
 
 	update_tree_world_position = sys::Register_UpdateTreeWorldPosition(ecs);
 	offset_scene_position = sys::Register_OffsetScenePosition(ecs);
@@ -82,15 +91,15 @@ void mod::SceneGraph::setSceneRoot(flecs::world &ecs, flecs::entity_t e, flecs::
 	if (origin == 0) {
 		origin = e;
 	}
-	ecs.entity(e).set<SceneRoot>({ origin });
+	ecs.entity(e).set<SceneRoot>({ ecs.entity(origin) } );
 }
 
 void mod::SceneGraph::setSceneOrigin(flecs::world& ecs, flecs::entity_t origin) const
 {
 	ecs.filter_builder<SceneRoot>()
 		.term<SceneRoot>()
-		.each([origin](flecs::entity e, SceneRoot& scene) {
-			scene.scene_origin = origin;
+		.each([origin, &ecs](flecs::entity e, SceneRoot& scene) {
+			scene.scene_origin = ecs.entity(origin);
 			e.set<SceneRoot>(scene);
 	});
 }
