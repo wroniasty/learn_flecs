@@ -1,6 +1,7 @@
 using flecs.meta
 using c
 
+
 Prefab SceneNode {
 	- Node
 	- OVERRIDE | (Vec3d, Local)
@@ -8,6 +9,7 @@ Prefab SceneNode {
 	- OVERRIDE | (Vec3d, Scene)
 	- OVERRIDE | (Vec3f, Rotation)
 }
+
 
 Engine {
 

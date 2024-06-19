@@ -80,6 +80,9 @@ FILE(GLOB AllModulesHeaders modules/*.h)
 FILE(GLOB AllGfxModulesSources modules/gfx/*.cpp)
 FILE(GLOB AllGfxModulesHeaders modules/gfx/*.h)
 
+FILE(GLOB AllModeModulesSources modules/mode/*.cpp)
+FILE(GLOB AllModeModulesHeaders modules/mode/*.h)
+
 FILE(GLOB AllFlecsScripts plecs/*.flecs)
  
 LIST(REMOVE_ITEM AllSources main.cpp)
@@ -98,7 +101,7 @@ set_property(TARGET scripted PROPERTY CXX_STANDARD 20)
 add_dependencies(scripted flecs_scripts)
 copy_resources_to_target(scripted plecs)
 
-add_executable(gfx "main_gfx.cpp" ${AllModulesSources} ${AllGfxModulesSources})
+add_executable(gfx "main_gfx.cpp" ${AllModulesSources} ${AllGfxModulesSources} ${AllModeModulesSources})
 target_link_libraries(gfx flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw)
 target_compile_definitions(gfx PUBLIC -DGLM_FORCE_SWIZZLE) 
 set_property(TARGET gfx PROPERTY CXX_STANDARD 20)

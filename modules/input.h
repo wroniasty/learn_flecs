@@ -2,18 +2,36 @@
 
 #include <flecs.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include <map>
 #include <string>
+#include <variant>
 
 namespace comp {
 	namespace inp {
 		struct KeyState {
 			bool down;
 			float time_pressed;
+
+			bool pressed;
+			bool released;
+
+			bool hold(float t, float hold_time) {
+				return t - time_pressed >= hold_time;
+			}
 		};
+
+		struct Stick {
+			glm::vec2 value;
+		};
+
+		struct Activator {};
+
 	}
 }
+
+namespace in = comp::inp;
 
 namespace mod {
 	struct Input {
@@ -21,7 +39,23 @@ namespace mod {
 
 		typedef std::map<std::string, int> KeyMap;
 		typedef std::map<int, flecs::entity> KeyEntityMap;
+		typedef std::map<int, comp::inp::KeyState> KeyStateMap;
+		typedef std::map<std::string, in::Stick> StickMap;
+		typedef std::map<int, std::pair<std::string, int>> StickKeyMap;
+		typedef std::map<std::string, bool> ActionMap;
+		typedef std::map<int, std::string> ActionKeyMap;
 
+		static const int max_keys = 512;
+
+		in::Stick get_stick(std::string name);
+		bool get_action(std::string name);
+
+		StickMap sticks;
+		StickKeyMap stick_keys;
+		ActionMap actions;
+		ActionKeyMap action_keys;
+
+		comp::inp::KeyState key_state_map[max_keys] = {};
 		KeyEntityMap key_entity_map;
 		KeyMap key_map = {
 			KeyMap::value_type("KEY_SPACE", 32),
@@ -148,4 +182,5 @@ namespace mod {
 
 
 	};
+
 }	

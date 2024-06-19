@@ -12,6 +12,10 @@ namespace comp {
 		struct WindowTitle {
 			std::string title;
 		};
+
+		struct TargetFPS {
+			int value;
+		};
 	}
 }
 

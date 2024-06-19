@@ -1,0 +1,39 @@
+using c.inp
+
+Engine {
+	InputConfig {
+		LeftStick {
+		   - Stick
+		   Mapping { 
+                     Up    { KEY_W } 
+                     Down  { KEY_S }
+                     Left  { KEY_A }
+                     Right { KEY_D }                  
+                   }      
+		}
+
+		RightStick {
+		   - Stick
+		   Mapping { 
+                     Up    { KEY_UP    } 
+                     Down  { KEY_DOWN  }
+                     Left  { KEY_LEFT  }
+                     Right { KEY_RIGHT }                  
+                   }      
+		}		
+
+		Afterburner {
+			- Activator
+			Mapping {
+				Exec { KEY_TAB }
+			}
+		}
+
+		Brake {
+			- Activator
+			Mapping { 
+				Exec { KEY_SPACE }
+			}
+		}
+	}
+}
