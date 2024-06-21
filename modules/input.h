@@ -55,6 +55,19 @@ namespace mod {
 		ActionMap actions;
 		ActionKeyMap action_keys;
 
+		glm::dvec3 mouse_pos;
+		glm::dvec3 mouse_delta;
+		std::map<int, comp::inp::KeyState> mouse_buttons = {
+			{GLFW_MOUSE_BUTTON_LEFT, {}},
+			{GLFW_MOUSE_BUTTON_RIGHT, {}},
+			{GLFW_MOUSE_BUTTON_MIDDLE, {}},
+			{GLFW_MOUSE_BUTTON_4, {}},
+			{GLFW_MOUSE_BUTTON_5, {}},
+			{GLFW_MOUSE_BUTTON_6, {}},
+			{GLFW_MOUSE_BUTTON_7, {}},
+			{GLFW_MOUSE_BUTTON_8, {}}
+		};
+
 		comp::inp::KeyState key_state_map[max_keys] = {};
 		KeyEntityMap key_entity_map;
 		KeyMap key_map = {

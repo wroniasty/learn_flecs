@@ -18,12 +18,16 @@ namespace game {
 		void draw(const flecs::world& ecs) override;
 	};
 
+	struct RenderTestMode : public Mode {
+		void draw(const flecs::world& ecs) override;
+	};
+
 }
 
 namespace comp {
 	
-	struct ActiveMode {
-		game::Mode *mode = nullptr;
+	struct GameMode {
+		game::Mode *ptr = nullptr;
 	};
 
 

@@ -16,6 +16,9 @@ namespace comp {
 		struct TargetFPS {
 			int value;
 		};
+
+		struct Mouse {};
+
 	}
 }
 

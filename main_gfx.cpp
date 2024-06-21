@@ -1,6 +1,10 @@
 #include <iostream>
 #include <flecs.h>
 
+#include <imgui.h>
+#include <imgui_bgfx.h>
+
+
 #include "modules/gfx/glfw_bridge.h"
 #include "modules/mode/mode.h"
 
@@ -31,18 +35,30 @@ int main(int, char**)
         ;
 
     auto glfw = glfw_module.get<comp::gfx::GLFW>();
+    IMGUI_CHECKVERSION();
+    //ImGui::CreateContext();
+    //ImGui_ImplGlfw_InitForOpenGL(glfw->window, true);
+    //ImGui_ImplOpenGL2_Init();
+    imguiCreate();
+
     auto mode_controller = ecs.get<mod::ModeModule>();
     while (!glfwWindowShouldClose(glfw->window))
     {
         ecs.progress();
-        auto active_mode = mode_controller->active_mode_entity.get<comp::ActiveMode>();
-        if (active_mode->mode) {
-            active_mode->mode->draw(ecs);
+        auto active_mode = mode_controller->active_mode_entity.get<comp::GameMode>();
+        if (active_mode->ptr) {
+            bgfx::dbgTextPrintf(0, 500, 0x0f, "Active Mode");
+            active_mode->ptr->draw(ecs);
         }
     }
 
+    imguiDestroy();
+      
+    //ImGui_ImplOpenGL2_Shutdown();
+    //ImGui_ImplGlfw_Shutdown();
+    //ImGui::DestroyContext();
+
+
     glfw_module.remove<comp::gfx::GLFW>();    
     ecs.progress();
-    //glfwDestroyWindow(window);
-    //glfwTerminate();
 }
