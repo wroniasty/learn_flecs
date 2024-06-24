@@ -39,20 +39,25 @@ int main(int, char**)
     //ImGui::CreateContext();
     //ImGui_ImplGlfw_InitForOpenGL(glfw->window, true);
     //ImGui_ImplOpenGL2_Init();
-    imguiCreate();
 
     auto mode_controller = ecs.get<mod::ModeModule>();
+
+    ecs.system("::sys::Draw")
+        .kind(flecs::OnStore)
+        .iter([mode_controller](flecs::iter& it) {
+            auto active_mode = mode_controller->active_mode_entity.get<comp::GameMode>();
+            if (active_mode->ptr) {
+                active_mode->ptr->draw(it.world());
+            }
+	});
+    
+    mode_controller->setActiveModule(ecs, "DebugInfo");
+
     while (!glfwWindowShouldClose(glfw->window))
     {
         ecs.progress();
-        auto active_mode = mode_controller->active_mode_entity.get<comp::GameMode>();
-        if (active_mode->ptr) {
-            bgfx::dbgTextPrintf(0, 500, 0x0f, "Active Mode");
-            active_mode->ptr->draw(ecs);
-        }
     }
 
-    imguiDestroy();
       
     //ImGui_ImplOpenGL2_Shutdown();
     //ImGui_ImplGlfw_Shutdown();
@@ -60,5 +65,6 @@ int main(int, char**)
 
 
     glfw_module.remove<comp::gfx::GLFW>();    
-    ecs.progress();
+    //ecs.progress();
+
 }

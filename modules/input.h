@@ -42,7 +42,7 @@ namespace mod {
 		typedef std::map<int, comp::inp::KeyState> KeyStateMap;
 		typedef std::map<std::string, in::Stick> StickMap;
 		typedef std::map<int, std::pair<std::string, int>> StickKeyMap;
-		typedef std::map<std::string, bool> ActionMap;
+		typedef std::map<std::string, comp::inp::KeyState> ActionMap;
 		typedef std::map<int, std::string> ActionKeyMap;
 
 		static const int max_keys = 512;

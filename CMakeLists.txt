@@ -88,22 +88,10 @@ FILE(GLOB AllFlecsScripts plecs/*.flecs)
 LIST(REMOVE_ITEM AllSources main.cpp)
 
 add_custom_target(flecs_scripts DEPENDS ${AllFlecsScripts})
-
-#add_library(imgui_glfw STATIC
-#  imgui/imgui.cpp
-#  imgui/imgui_draw.cpp
-#  imgui/imgui_demo.cpp
-#  imgui/imgui_tables.cpp
-#  imgui/imgui_widgets.cpp
-#  imgui/imgui_bgfx.cpp
-#  imgui/bgfx_utils.cpp
-  #imgui/backends/imgui_impl_glfw.cpp
-  #imgui/backends/imgui_impl_opengl2.cpp
-#)
-#find_package(OPENGL REQUIRED)
-#target_link_libraries(imgui_glfw PUBLIC glfw ${OPENGL_LIBRARIES})
-
+ 
 FILE(GLOB ImguiSources imgui/*.cpp)
+
+add_subdirectory(resources/shaders)
  
 add_executable(runtests "main_test_runner.cpp" ${AllModulesSources})
 target_link_libraries(runtests flecs::flecs_static glm::glm spdlog bgfx Catch2)
@@ -114,14 +102,19 @@ add_executable(scripted "main_scripted.cpp" ${AllModulesSources})
 target_link_libraries(scripted flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw)
 target_compile_definitions(scripted PUBLIC -DGLM_FORCE_SWIZZLE) 
 set_property(TARGET scripted PROPERTY CXX_STANDARD 20)
-add_dependencies(scripted flecs_scripts)
+add_dependencies(scripted flecs_scripts compile_bgfx_shaders)
 copy_resources_to_target(scripted plecs)
 
-add_executable(gfx "main_gfx.cpp" ${AllModulesSources} ${AllGfxModulesSources} ${AllModeModulesSources} ${ImguiSources})
+add_executable(gfx "main_gfx.cpp" 
+    ${AllModulesSources} ${AllGfxModulesSources} ${AllModeModulesSources} ${ImguiSources}
+    "resources/shaders/shaders.h"
+)
 target_link_libraries(gfx flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw)
 target_compile_definitions(gfx PUBLIC -DGLM_FORCE_SWIZZLE) 
 set_property(TARGET gfx PROPERTY CXX_STANDARD 20)
+add_dependencies(gfx flecs_scripts compile_bgfx_shaders ${AllShaderHeaders})
 copy_resources_to_target(gfx plecs)
+
 
 
   

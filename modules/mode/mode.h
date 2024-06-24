@@ -4,6 +4,8 @@
 #include <string>
 #include <map>
 
+#include "../input.h"
+
 namespace game {
 
 	struct Mode {
@@ -12,13 +14,17 @@ namespace game {
 		virtual void draw(const flecs::world& ecs);
 		virtual void exit(const flecs::world& ecs);
 		virtual void pause(const flecs::world& ecs);
+
+		virtual void debug_ui(const flecs::world& ecs);
+
+		bool show_debug_overlay = false;
+		bool show_debug_ui = false;
+
+		mod::Input *input_module = nullptr;
+		flecs::entity glfw_module{};
 	};
 
 	struct DebugInfoMode : public Mode {
-		void draw(const flecs::world& ecs) override;
-	};
-
-	struct RenderTestMode : public Mode {
 		void draw(const flecs::world& ecs) override;
 	};
 
@@ -40,7 +46,7 @@ namespace mod {
 
 		ModeModule(flecs::world& ecs);
 
-		void setActiveModule(const flecs::world& ecs, std::string name);
+		void setActiveModule(const flecs::world& ecs, std::string name) const;
 
 
 	};

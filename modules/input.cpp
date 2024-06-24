@@ -60,7 +60,7 @@ mod::Input::Input(flecs::world& ecs)
 						auto key_value = this->key_map.at(key.name().c_str());
 						this->action_keys[key_value] = input_def.name().c_str();
 					});
-					this->actions[input_def.name().c_str()] = false;
+					this->actions[input_def.name().c_str()] = { 0 };
 				}
 			}
 		});
@@ -71,7 +71,7 @@ mod::Input::Input(flecs::world& ecs)
 		.iter([](flecs::iter& it) {
 			auto input_module = it.world().get_mut<mod::Input>();
 			for (auto &kv : input_module->action_keys) {
-				input_module->actions[kv.second] = input_module->key_state_map[kv.first].down;
+				input_module->actions[kv.second] = input_module->key_state_map[kv.first];
 			}
 			for (auto &kv : input_module->sticks) {
 				auto stick_name = kv.first;
@@ -101,9 +101,10 @@ mod::Input::Input(flecs::world& ecs)
 		}
 	);
 
-	ecs.system("::sys::ClearInputStates")
+	ecs.system("::sys::ClearInputKeyboardStates")
 		.kind(flecs::PostFrame)
 		.iter([](flecs::iter& it) {
+			//spdlog::info(it.system().name().c_str());
 			auto input_module = it.world().get_mut<mod::Input>();
 			for (int i = 0; i < input_module->max_keys; i++) {
 				if (input_module->key_state_map[i].pressed) {
@@ -136,7 +137,7 @@ bool mod::Input::get_action(std::string name)
 {
 	auto it = actions.find(name);
 	if (it != actions.end()) {
-		return it->second;
+		return it->second.down;
 	}
 	else {
 		spdlog::error("Action {} not found", name);

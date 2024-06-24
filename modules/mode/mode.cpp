@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <imgui_bgfx.h>
 
+#include "render_sandbox.h"
 #include "../input.h"
 #include "../gfx/glfw_bridge.h"
 
@@ -25,15 +26,19 @@ mod::ModeModule::ModeModule(flecs::world& ecs)
 	active_mode_entity = ecs.entity("::Engine::ActiveMode")
 		.set<comp::GameMode>({0});
 
-	ecs.entity("DebugInfoMode")
+	ecs.entity("DebugInfo")
 		.set<comp::GameMode>({ new game::DebugInfoMode() })
 		.child_of(active_mode_entity)
 	;
 
-	setActiveModule(ecs, "DebugInfoMode");
+	ecs.entity("RenderSandbox")
+		.set<comp::GameMode>({ new game::RenderSandboxMode() })
+		.child_of(active_mode_entity)
+	;
+
 }
 
-void mod::ModeModule::setActiveModule(const flecs::world &ecs, std::string name)
+void mod::ModeModule::setActiveModule(const flecs::world &ecs, std::string name) const
 {
 	auto current_mode = active_mode_entity.get_mut<comp::GameMode>();
 	if (current_mode->ptr) {
@@ -44,6 +49,10 @@ void mod::ModeModule::setActiveModule(const flecs::world &ecs, std::string name)
 	if (mode_entity) {
 		auto mode = mode_entity.get_mut<comp::GameMode>(); 
 		if (mode) {
+			if (current_mode->ptr) {
+				mode->ptr->show_debug_overlay = current_mode->ptr->show_debug_overlay;
+				mode->ptr->show_debug_ui = current_mode->ptr->show_debug_ui;
+			}
 			current_mode->ptr = mode->ptr;
 			mode->ptr->init(ecs);
 		}
@@ -52,48 +61,76 @@ void mod::ModeModule::setActiveModule(const flecs::world &ecs, std::string name)
 }
 
 namespace game {
-	void Mode::init(const flecs::world& ecs) {}
+	void Mode::init(const flecs::world& ecs) {
+
+	}
+	
 	void Mode::update(const flecs::world& ecs) {}
+	
 	void Mode::draw(const flecs::world& ecs) {}
-	void Mode::exit(const flecs::world& ecs) {}
+
+	void Mode::exit(const flecs::world& ecs) {
+
+	}
 	void Mode::pause(const flecs::world& ecs) {}
 
-	void DebugInfoMode::draw(const flecs::world& ecs) {
-		auto input_module = ecs.get_mut<mod::Input>();
-		auto glfw_module = ecs.module<mod::GLFW>();
+	void Mode::debug_ui(const flecs::world& ecs) {
+		input_module = ecs.get_mut<::mod::Input>();
+		glfw_module = ecs.module<::mod::GLFW>();
 		auto window_size = glfw_module.get<comp::gfx::WindowSize>();
 		
-		uint8_t imgui_mouse_buttons = 
+		if (input_module->actions["ToggleDebugUI"].pressed) {
+			show_debug_ui = !show_debug_ui;
+			spdlog::info("UI {}", show_debug_ui);
+		}
+		if (input_module->actions["ToggleDebugOverlay"].pressed) {
+			show_debug_overlay = !show_debug_overlay;
+			spdlog::info("Overlay {}", show_debug_overlay);
+		}
+
+		uint8_t imgui_mouse_buttons =
 			(input_module->mouse_buttons[GLFW_MOUSE_BUTTON_LEFT].down ? IMGUI_MBUT_LEFT : 0) |
 			(input_module->mouse_buttons[GLFW_MOUSE_BUTTON_RIGHT].down ? IMGUI_MBUT_RIGHT : 0) |
 			(input_module->mouse_buttons[GLFW_MOUSE_BUTTON_MIDDLE].down ? IMGUI_MBUT_MIDDLE : 0)
 			;
-		bool showDebug=false;
-		imguiBeginFrame(input_module->mouse_pos.x, input_module->mouse_pos.y, 
-			imgui_mouse_buttons, 0 /* TODO: scroll */, window_size->width, window_size->height, -1, 0);
-			ecs.lookup("::Engine::ActiveMode")
-				.each([&showDebug](flecs::entity e, comp::GameMode& mode) {
-					showDebug = mode.ptr != nullptr;
-				});
-		imguiEndFrame();
-		//ImGui_ImplOpenGL2_NewFrame();
-		//ImGui_ImplGlfw_NewFrame();
-		//ImGui::NewFrame();
-		//bgfx::setDebug(BGFX_DEBUG_STATS);
-		//ImGui::ShowDemoWindow();
-		//ImGui::Render();
-		bgfx::touch(1);
-		if (showDebug)
+		if (show_debug_ui) {
+			imguiBeginFrame(input_module->mouse_pos.x, input_module->mouse_pos.y,
+				imgui_mouse_buttons, 0 /* TODO: scroll */, window_size->width, window_size->height, -1, 255);
+			ImGui::Begin("Available modes");	
+			auto mode_module = ecs.get<::mod::ModeModule>();
+			mode_module->active_mode_entity.children([&ecs, mode_module](flecs::entity e) {
+				auto mode = e.get<comp::GameMode>();
+				if (mode->ptr) {
+					if (ImGui::Button(e.name().c_str())) {						
+						mode_module->setActiveModule(ecs, e.name().c_str());
+					}
+				}
+			});
+			ImGui::End();
+			imguiEndFrame();
+		}
+		else {
+			bgfx::touch(255);
+		}
+		
+		if (show_debug_overlay) {
 			bgfx::setDebug(BGFX_DEBUG_STATS);
-		else
+		}
+		else {
 			bgfx::setDebug(BGFX_DEBUG_NONE);
+		}
+	}
+
+	void DebugInfoMode::draw(const flecs::world& ecs) {
+		input_module = ecs.get_mut<::mod::Input>();
+		glfw_module = ecs.module<::mod::GLFW>();		
+
+		debug_ui(ecs);
+
+		bgfx::touch(1);		
 		bgfx::frame();
 	}
 
-	void RenderTestMode::draw(const flecs::world& ecs) {
-		bgfx::touch(0);
-		bgfx::frame();
-	}
 
 }
 

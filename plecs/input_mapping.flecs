@@ -35,5 +35,20 @@ Engine {
 				Exec { KEY_SPACE }
 			}
 		}
+
+		ToggleDebugUI {
+			- Activator
+			Mapping {
+				Exec { KEY_F8 }
+			}
+		}
+
+		ToggleDebugOverlay {
+			- Activator
+			Mapping {
+				Exec { KEY_F9 }
+			}
+		}
+
 	}
 }
