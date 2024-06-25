@@ -5,6 +5,8 @@
 #include <map>
 
 #include "../input.h"
+#include <bgfx/bgfx.h>
+
 
 namespace game {
 
@@ -15,10 +17,10 @@ namespace game {
 		virtual void exit(const flecs::world& ecs);
 		virtual void pause(const flecs::world& ecs);
 
-		virtual void debug_ui(const flecs::world& ecs);
+		virtual void debug_ui(const flecs::world& ecs, const bgfx::ViewId view = 255L);
 
 		bool show_debug_overlay = false;
-		bool show_debug_ui = false;
+		bool show_debug_ui = true;
 
 		mod::Input *input_module = nullptr;
 		flecs::entity glfw_module{};

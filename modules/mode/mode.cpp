@@ -36,6 +36,15 @@ mod::ModeModule::ModeModule(flecs::world& ecs)
 		.child_of(active_mode_entity)
 	;
 
+	ecs.system("::sys::RenderGameMode")
+		.kind(flecs::OnStore)
+		.iter([this](flecs::iter& it) {
+		auto active_mode = this->active_mode_entity.get<comp::GameMode>();
+		if (active_mode->ptr) {
+			active_mode->ptr->draw(it.world());
+		}
+	});
+
 }
 
 void mod::ModeModule::setActiveModule(const flecs::world &ecs, std::string name) const
@@ -74,7 +83,7 @@ namespace game {
 	}
 	void Mode::pause(const flecs::world& ecs) {}
 
-	void Mode::debug_ui(const flecs::world& ecs) {
+	void Mode::debug_ui(const flecs::world& ecs, const bgfx::ViewId view) {
 		input_module = ecs.get_mut<::mod::Input>();
 		glfw_module = ecs.module<::mod::GLFW>();
 		auto window_size = glfw_module.get<comp::gfx::WindowSize>();
@@ -95,7 +104,7 @@ namespace game {
 			;
 		if (show_debug_ui) {
 			imguiBeginFrame(input_module->mouse_pos.x, input_module->mouse_pos.y,
-				imgui_mouse_buttons, 0 /* TODO: scroll */, window_size->width, window_size->height, -1, 255);
+				imgui_mouse_buttons, 0 /* TODO: scroll */, window_size->width, window_size->height, -1, view);
 			ImGui::Begin("Available modes");	
 			auto mode_module = ecs.get<::mod::ModeModule>();
 			mode_module->active_mode_entity.children([&ecs, mode_module](flecs::entity e) {
@@ -110,7 +119,7 @@ namespace game {
 			imguiEndFrame();
 		}
 		else {
-			bgfx::touch(255);
+			bgfx::touch(view);
 		}
 		
 		if (show_debug_overlay) {

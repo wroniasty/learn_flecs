@@ -52,13 +52,27 @@ add_git_dependency(
 )
 
 set(BGFX_BUILD_EXAMPLES OFF)
-
-
 add_git_dependency(
 	bgfx
     https://github.com/bkaradzic/bgfx.cmake
     v1.127.8765-472
 )
+
+set(BOX2D_BUILD_UNIT_TESTS OFF)
+set(BOX2D_BUILD_TESTBED OFF)
+set(BOX2D_BUILD_DOCS OFF)
+ 
+add_git_dependency(
+    box2d
+    https://github.com/erincatto/box2d
+    v2.4.1
+)
+
+add_git_dependency(
+    assimp
+    https://github.com/assimp/assimp.git
+    v5.4.0
+) 
 
 set(BOOST_ROOT "d:/Documents/Games/boost_1_85_0")
 find_package(Boost)
@@ -109,7 +123,7 @@ add_executable(gfx "main_gfx.cpp"
     ${AllModulesSources} ${AllGfxModulesSources} ${AllModeModulesSources} ${ImguiSources}
     "resources/shaders/shaders.h"
 )
-target_link_libraries(gfx flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw)
+target_link_libraries(gfx flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw box2d assimp )
 target_compile_definitions(gfx PUBLIC -DGLM_FORCE_SWIZZLE) 
 set_property(TARGET gfx PROPERTY CXX_STANDARD 20)
 add_dependencies(gfx flecs_scripts compile_bgfx_shaders ${AllShaderHeaders})

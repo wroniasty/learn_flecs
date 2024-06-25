@@ -116,6 +116,12 @@ mod::GLFW::GLFW(flecs::world& ecs)
 				}
 				});
 
+			glfwSetWindowSizeCallback(glfw.window, [](GLFWwindow* window, int width, int height) {
+				flecs::world* ecs = (flecs::world*)glfwGetWindowUserPointer(window);
+				ecs->module<mod::GLFW>().set<comp::gfx::WindowSize>({ width, height });			
+			});
+
+
 		}
 			}
 	);
@@ -178,6 +184,15 @@ mod::GLFW::GLFW(flecs::world& ecs)
 					input_module->mouse_pos = pos;
 				}
 			}
+	});
+
+	ecs.system("::sys::CheckExit")
+		.kind(flecs::PostFrame)
+		.iter([](flecs::iter& it) {
+		auto glfw = it.world().module<mod::GLFW>().get<comp::gfx::GLFW>();
+		if (glfwWindowShouldClose(glfw->window)) {
+			it.world().quit();
+		}
 	});
 
 }
