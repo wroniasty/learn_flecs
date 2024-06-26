@@ -12,12 +12,15 @@ foreach(shader_source_file ${AllShaderSources})
 #	message(STATUS "${shader_output_file_header}")
 	add_custom_command(
 		OUTPUT ${shader_output_file_bin}
-		#COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}"
-		COMMAND ${SHADERC_COMMAND} -f ${shader_source_file} -o ${shader_output_file_bin} --type ${shader_type} --varyingdef ${CMAKE_CURRENT_SOURCE_DIR}/varying/standard.def.sc -p 430
-		COMMAND ${SHADERC_COMMAND} -f ${shader_source_file} -o ${shader_output_file_header} --bin2c ${shader_name} --type ${shader_type} --varyingdef ${CMAKE_CURRENT_SOURCE_DIR}/varying/standard.def.sc -p 430
-		#COMMAND copy /b ${all_shader_output_file_header} +,,
+		COMMAND ${SHADERC_COMMAND} -f ${shader_source_file} -o ${shader_output_file_bin} --type ${shader_type} --varyingdef ${CMAKE_CURRENT_SOURCE_DIR}/varying/standard.def.sc -p s_5_0
 		DEPENDS ${shader_source_file}
 		COMMENT "Compiling shader ${shader_name}"
+	)
+	add_custom_command(
+		OUTPUT ${shader_output_file_header}
+		COMMAND ${SHADERC_COMMAND} -f ${shader_source_file} -o ${shader_output_file_header} --bin2c ${shader_name} --type ${shader_type} --varyingdef ${CMAKE_CURRENT_SOURCE_DIR}/varying/standard.def.sc -p s_5_0
+		DEPENDS ${shader_source_file}
+		COMMENT "Compiling shader header ${shader_name}"
 	)
 	list(APPEND AllShaderOutputsBin ${shader_output_file_bin})
 	list(APPEND AllShaderHeaders ${shader_output_file_header})

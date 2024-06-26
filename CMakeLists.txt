@@ -51,7 +51,7 @@ add_git_dependency(
     3.4
 )
 
-set(BGFX_BUILD_EXAMPLES OFF)
+set(BGFX_BUILD_EXAMPLES ON)
 add_git_dependency(
 	bgfx
     https://github.com/bkaradzic/bgfx.cmake
@@ -109,12 +109,12 @@ add_subdirectory(resources/shaders)
  
 add_executable(runtests "main_test_runner.cpp" ${AllModulesSources})
 target_link_libraries(runtests flecs::flecs_static glm::glm spdlog bgfx Catch2)
-target_compile_definitions(runtests PUBLIC -D_TEST_SUITE -DGLM_FORCE_SWIZZLE) 
+target_compile_definitions(runtests PUBLIC -D_TEST_SUITE -DGLM_FORCE_SWIZZLE -DGLM_FORCE_LEFT_HANDED) 
 set_property(TARGET runtests PROPERTY CXX_STANDARD 20)
 
 add_executable(scripted "main_scripted.cpp" ${AllModulesSources})
 target_link_libraries(scripted flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw)
-target_compile_definitions(scripted PUBLIC -DGLM_FORCE_SWIZZLE) 
+target_compile_definitions(scripted PUBLIC -DGLM_FORCE_SWIZZLE -DGLM_FORCE_LEFT_HANDED) 
 set_property(TARGET scripted PROPERTY CXX_STANDARD 20)
 add_dependencies(scripted flecs_scripts compile_bgfx_shaders)
 copy_resources_to_target(scripted plecs)
@@ -124,7 +124,7 @@ add_executable(gfx "main_gfx.cpp"
     "resources/shaders/shaders.h"
 )
 target_link_libraries(gfx flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw box2d assimp )
-target_compile_definitions(gfx PUBLIC -DGLM_FORCE_SWIZZLE) 
+target_compile_definitions(gfx PUBLIC -DGLM_FORCE_SWIZZLE -DGLM_FORCE_LEFT_HANDED) 
 set_property(TARGET gfx PROPERTY CXX_STANDARD 20)
 add_dependencies(gfx flecs_scripts compile_bgfx_shaders ${AllShaderHeaders})
 copy_resources_to_target(gfx plecs)

@@ -52,7 +52,7 @@ mod::GLFW::GLFW(flecs::world& ecs)
 			bgfx::renderFrame();
 			// Initialize bgfx using the native window handle and window resolution.
 			bgfx::Init init;
-			init.type = bgfx::RendererType::OpenGL;
+			//init.type = bgfx::RendererType::OpenGL;
 #if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
 			init.platformData.ndt = glfwGetX11Display();
 			init.platformData.nwh = (void*)(uintptr_t)glfwGetX11Window(glfw.window);
