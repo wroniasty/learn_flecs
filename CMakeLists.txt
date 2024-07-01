@@ -1,7 +1,9 @@
 ﻿cmake_minimum_required (VERSION 3.8)
   
 include(FetchContent)
- 
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/" ${CMAKE_MODULE_PATH})
+
 function(add_git_dependency libName gitURL gitTag)
     FetchContent_Declare(${libName}
         GIT_REPOSITORY ${gitURL}
@@ -51,13 +53,6 @@ add_git_dependency(
     3.4
 )
 
-set(BGFX_BUILD_EXAMPLES ON)
-add_git_dependency(
-	bgfx
-    https://github.com/bkaradzic/bgfx.cmake
-    v1.127.8765-472
-)
-
 set(BOX2D_BUILD_UNIT_TESTS OFF)
 set(BOX2D_BUILD_TESTBED OFF)
 set(BOX2D_BUILD_DOCS OFF)
@@ -77,6 +72,9 @@ add_git_dependency(
 set(BOOST_ROOT "d:/Documents/Games/boost_1_85_0")
 find_package(Boost)
 
+find_package(Magnum REQUIRED)
+find_package(Corrade CONFIG REQUIRED)
+
 if(Boost_FOUND)
 	include_directories(${Boost_INCLUDE_DIRS})
     message(STATUS "Boost :${Boost_LIBRARY_DIRS}")
@@ -86,49 +84,10 @@ endif()
 
 project("flecs_sandbox")
 
-include_directories(imgui/)
 
-FILE(GLOB AllModulesSources modules/*.cpp)
-FILE(GLOB AllModulesHeaders modules/*.h)
+add_subdirectory(corrade EXCLUDE_FROM_ALL)
 
-FILE(GLOB AllGfxModulesSources modules/gfx/*.cpp)
-FILE(GLOB AllGfxModulesHeaders modules/gfx/*.h)
-
-FILE(GLOB AllModeModulesSources modules/mode/*.cpp)
-FILE(GLOB AllModeModulesHeaders modules/mode/*.h)
-
-FILE(GLOB AllFlecsScripts plecs/*.flecs)
+set(MAGNUM_WITH_GLFWAPPLICATION ON CACHE BOOL "" FORCE)
+add_subdirectory(magnum EXCLUDE_FROM_ALL)
  
-LIST(REMOVE_ITEM AllSources main.cpp)
-
-add_custom_target(flecs_scripts DEPENDS ${AllFlecsScripts})
- 
-FILE(GLOB ImguiSources imgui/*.cpp)
-
-add_subdirectory(resources/shaders)
- 
-add_executable(runtests "main_test_runner.cpp" ${AllModulesSources})
-target_link_libraries(runtests flecs::flecs_static glm::glm spdlog bgfx Catch2)
-target_compile_definitions(runtests PUBLIC -D_TEST_SUITE -DGLM_FORCE_SWIZZLE -DGLM_FORCE_LEFT_HANDED) 
-set_property(TARGET runtests PROPERTY CXX_STANDARD 20)
-
-add_executable(scripted "main_scripted.cpp" ${AllModulesSources})
-target_link_libraries(scripted flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw)
-target_compile_definitions(scripted PUBLIC -DGLM_FORCE_SWIZZLE -DGLM_FORCE_LEFT_HANDED) 
-set_property(TARGET scripted PROPERTY CXX_STANDARD 20)
-add_dependencies(scripted flecs_scripts compile_bgfx_shaders)
-copy_resources_to_target(scripted plecs)
-
-add_executable(gfx "main_gfx.cpp" 
-    ${AllModulesSources} ${AllGfxModulesSources} ${AllModeModulesSources} ${ImguiSources}
-    "resources/shaders/shaders.h"
-)
-target_link_libraries(gfx flecs::flecs_static glm::glm spdlog bgfx bx bimg glfw box2d assimp )
-target_compile_definitions(gfx PUBLIC -DGLM_FORCE_SWIZZLE -DGLM_FORCE_LEFT_HANDED) 
-set_property(TARGET gfx PROPERTY CXX_STANDARD 20)
-add_dependencies(gfx flecs_scripts compile_bgfx_shaders ${AllShaderHeaders})
-copy_resources_to_target(gfx plecs)
-
-
-
-  
+add_subdirectory(src)
